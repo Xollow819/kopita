@@ -1,17 +1,62 @@
-# Ristretto
+# KOPI TA
 
-A coffee shop site whose board never goes stale.
+KOPI TA is an editorial coffee experience for final-semester students. The website follows coffee from **hulu to hilir**, while connecting each stage with the journey of completing a thesis.
 
-This folder is a complete Hatchable project. Everything the app needs is in these files: pages, API routes, database migrations, seed data, and the hatchable.toml manifest that declares the services and keys it uses.
+The site combines documentary coffee imagery, a restrained paper-and-forest visual system, bilingual Indonesian and English copy, product browsing, a persistent cart, and WhatsApp ordering.
 
-## Run your own copy
+## Experience
 
-1. Go to https://hatchable.com/deploy
-2. Bring this folder as a .zip, or point the importer at a Git repository that contains it
-3. Your copy gets its own database, its own URL, and connects to your own keys
+- Cinematic hero introducing the coffee and thesis journey
+- Chapter navigation covering Hulu, Panen, Proses, Roast, Journey, Racik, and Hilir
+- Editorial storytelling with documentary photography
+- Responsive layouts for desktop, tablet, and mobile
+- Indonesian and English localization
+- Product cards for KOPI TA drinks
+- Persistent shopping cart using browser storage
+- Quantity controls and order totals
+- WhatsApp checkout with a prefilled order message
+- Lightweight looping GIF for the green-bean process section
+- Reduced-motion support and keyboard-friendly cart interactions
 
-## About Hatchable
+## Project structure
 
-Hatchable is where AI-built apps go live. Connect the AI you already use and it can build, deploy, and run apps like this one for you.
+```text
+public/
+├── index.html              # Page structure and content
+├── style.css               # Design system, responsive layout, and motion rules
+├── app.js                  # Localization, navigation, cart, and checkout logic
+├── id-core.js              # Indonesian copy
+├── en.js                   # English copy
+└── assets/
+    └── story/              # Optimized KOPI TA imagery and process GIF
+```
 
-Built on Hatchable. https://hatchable.com
+## Run locally
+
+The project is a static website with no build step or backend requirement.
+
+```bash
+python3 -m http.server 4175 --directory public
+```
+
+Then open [http://localhost:4175](http://localhost:4175).
+
+## Ordering
+
+Products can be added to the cart from the Racik section. The cart stores its state in `localStorage` and prepares a WhatsApp message containing:
+
+- Product names
+- Quantities
+- Order total
+- Name field
+- Pickup time field
+
+Update the WhatsApp number in `public/app.js` and the footer link in `public/index.html` if the ordering contact changes.
+
+## Assets
+
+The story imagery is stored in `public/assets/story/`. The process animation is delivered as an optimized GIF so it can run without loading the original camera video file in the browser.
+
+## Deployment
+
+The site can be deployed as a static project through Vercel, GitHub Pages, or another static hosting provider. The production branch is `main`.
