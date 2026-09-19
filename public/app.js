@@ -1,1 +1,257 @@
-const ID=window.KOPITA_ID||{},EN=window.KOPITA_EN||{},texts=[...document.querySelectorAll("[data-i18n]")].map(a=>[a,a.dataset.i18n,a.textContent]),htmls=[...document.querySelectorAll("[data-i18n-html]")].map(a=>[a,a.dataset.i18nHtml,a.innerHTML]),tr=a=>lang==="id"?ID[a]??EN[a]:EN[a];let lang=localStorage.getItem("kopita-lang")||"id";const cart=JSON.parse(localStorage.getItem("kopita-cart")||"[]"),drawer=document.querySelector("#drawer"),backdrop=document.querySelector("#backdrop"),cartItems=document.querySelector("#cartItems"),total=document.querySelector("#total"),toast=document.querySelector("#toast"),rupiah=a=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(a);function setLang(a){lang=a,localStorage.setItem("kopita-lang",lang),document.documentElement.lang=lang,texts.forEach(([t,e,n])=>{const v=tr(e);if(v!==undefined)t.textContent=v}),htmls.forEach(([t,e,n])=>{const v=tr(e);if(v!==undefined)t.innerHTML=v}),document.querySelectorAll("[data-lang]").forEach(t=>t.classList.toggle("active",t.dataset.lang===lang)),render()}function save(){localStorage.setItem("kopita-cart",JSON.stringify(cart)),render()}function openCart(){drawer.classList.add("open"),backdrop.hidden=!1,document.body.classList.add("lock")}function closeCart(){drawer.classList.remove("open"),backdrop.hidden=!0,document.body.classList.remove("lock")}function render(){const a=cart.reduce((e,n)=>e+n.qty,0),t=cart.reduce((e,n)=>e+n.qty*n.price,0);document.querySelectorAll("[data-count]").forEach(e=>{e.textContent=a,e.hidden=!a}),total.textContent=rupiah(t);if(!cart.length){cartItems.innerHTML=`<div class="empty"><div><div>+</div><strong>${tr("emptyTitle")}</strong><p>${tr("emptyCopy")}</p></div></div>`;return}cartItems.innerHTML=cart.map((e,n)=>`<div class="cart-item"><div><h3>${lang==="id"?e.nameId:e.nameEn}</h3><p>${rupiah(e.price*e.qty)}</p></div><div class="qty"><button data-minus="${n}">−</button><strong>${e.qty}</strong><button data-plus="${n}">+</button></div></div>`).join("")}function showToast(a){toast.textContent=a,toast.hidden=!1,setTimeout(()=>toast.hidden=!0,1800)}document.querySelectorAll("[data-lang]").forEach(a=>a.onclick=()=>setLang(a.dataset.lang)),document.querySelectorAll(".add").forEach(a=>a.onclick=()=>{const t=cart.find(e=>e.id===a.dataset.id);t?t.qty++:cart.push({id:a.dataset.id,nameEn:a.dataset.en,nameId:a.dataset.idname,price:+a.dataset.price,qty:1}),save(),showToast((lang==="id"?a.dataset.idname:a.dataset.en)+" "+tr("added"))}),cartItems.onclick=a=>{const t=a.target.dataset.plus,e=a.target.dataset.minus;t!==void 0&&(cart[+t].qty++,save()),e!==void 0&&(cart[+e].qty--,cart[+e].qty<1&&cart.splice(+e,1),save())},document.querySelectorAll("[data-cart-open]").forEach(a=>a.onclick=openCart),document.querySelector("#close").onclick=closeCart,backdrop.onclick=closeCart,document.addEventListener("keydown",a=>{a.key==="Escape"&&closeCart()});const phone="6282161750504";document.querySelectorAll("[data-quick]").forEach(a=>a.onclick=()=>window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(lang==="id"?`Halo KOPI TA! Saya ingin memesan minuman untuk teman nugas.\nNama:\nPesanan:\nWaktu pengambilan:`:`Hello KOPI TA! I would like to order a drink for my study session.\nName:\nOrder:\nPickup time:`),"_blank")),document.querySelector("#checkout").onclick=()=>{if(!cart.length){showToast(tr("emptyToast"));return}const a=cart.map(n=>"• "+n.qty+"x "+(lang==="id"?n.nameId:n.nameEn)+" ("+rupiah(n.qty*n.price)+")"),t=cart.reduce((n,i)=>n+i.qty*i.price,0),e=lang==="id"?["Halo KOPI TA! Saya ingin memesan:","",...a,"","Total: "+rupiah(t),"","Nama:","Waktu pengambilan:"]:["Hello KOPI TA! I would like to order:","",...a,"","Total: "+rupiah(t),"","Name:","Pickup time:"];window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(e.join("\n")),"_blank")};const nav=document.querySelector("#nav");addEventListener("scroll",()=>nav.classList.toggle("scrolled",scrollY>24),{passive:!0});const burger=document.querySelector("#burger"),mobile=document.querySelector("#mobile");burger.onclick=()=>{const a=mobile.classList.toggle("open");burger.textContent=a?"×":"≡",burger.setAttribute("aria-expanded",a)},mobile.querySelectorAll("a").forEach(a=>a.onclick=()=>mobile.classList.remove("open"));document.querySelectorAll("[data-lang]").forEach(a=>a.addEventListener("click",()=>setLang(a.dataset.lang)));const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches,video=document.querySelector("#heroFilm");if(video&&!reduce){const tick=()=>{if(video.duration&&Number.isFinite(video.duration)){const max=Math.max(0,document.documentElement.scrollHeight-innerHeight),p=Math.min(1,Math.max(0,scrollY/max));video.currentTime=p*video.duration}requestAnimationFrame(tick)};video.addEventListener("loadedmetadata",()=>requestAnimationFrame(tick),{once:!0})}const sections=[...document.querySelectorAll("[data-story-section]")],rail=[...document.querySelectorAll("[data-chapter]")],progress=document.querySelector("#railProgress");if(sections.length){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){rail.forEach(a=>a.classList.toggle("active",a.dataset.chapter===e.target.dataset.storySection))}}),{rootMargin:"-42% 0px -42% 0px"});sections.forEach(a=>io.observe(a));addEventListener("scroll",()=>{const max=document.documentElement.scrollHeight-innerHeight;progress.style.height=`${max?scrollY/max*100:0}%`},{passive:!0})}setLang(lang);
+const ID = window.KOPITA_ID || {};
+const EN = window.KOPITA_EN || {};
+const translate = (key) => (lang === "id" ? ID[key] ?? EN[key] : EN[key]);
+let lang = localStorage.getItem("kopita-lang") || "id";
+let cart = [];
+try {
+  cart = JSON.parse(localStorage.getItem("kopita-cart") || "[]");
+  if (!Array.isArray(cart)) cart = [];
+} catch {
+  cart = [];
+}
+
+const texts = [...document.querySelectorAll("[data-i18n]")].map((el) => [el, el.dataset.i18n]);
+const htmlTexts = [...document.querySelectorAll("[data-i18n-html]")].map((el) => [el, el.dataset.i18nHtml]);
+const drawer = document.querySelector("#drawer");
+const backdrop = document.querySelector("#backdrop");
+const cartItems = document.querySelector("#cartItems");
+const total = document.querySelector("#total");
+const toast = document.querySelector("#toast");
+const fab = document.querySelector("[data-cart-open]");
+const burger = document.querySelector("#burger");
+const mobile = document.querySelector("#mobile");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const phone = "6282161750504";
+let lastFocusedElement = null;
+let toastTimer;
+
+if (reduceMotion) {
+  const processGif = document.querySelector(".process-gif");
+  if (processGif) processGif.src = "./assets/story/process-new-poster.jpg";
+}
+
+const rupiah = (amount) => new Intl.NumberFormat("id-ID", {
+  style: "currency",
+  currency: "IDR",
+  maximumFractionDigits: 0,
+}).format(amount);
+
+function updateAddLabels() {
+  document.querySelectorAll(".add").forEach((button) => {
+    const name = lang === "id" ? button.dataset.idname : button.dataset.en;
+    button.setAttribute("aria-label", `${translate("addToCart") || "Add"} ${name}`);
+  });
+}
+
+function updateCartLabel(count) {
+  const label = lang === "id" ? `Buka keranjang, ${count} item` : `Open cart, ${count} item${count === 1 ? "" : "s"}`;
+  fab?.setAttribute("aria-label", label);
+}
+
+function render() {
+  const count = cart.reduce((sum, item) => sum + item.qty, 0);
+  const amount = cart.reduce((sum, item) => sum + item.qty * item.price, 0);
+  document.querySelectorAll("[data-count]").forEach((el) => {
+    el.textContent = count;
+    el.hidden = !count;
+  });
+  updateCartLabel(count);
+  total.textContent = rupiah(amount);
+
+  if (!cart.length) {
+    cartItems.innerHTML = `<div class="empty"><div><div aria-hidden="true">+</div><strong>${translate("emptyTitle")}</strong><p>${translate("emptyCopy")}</p></div></div>`;
+    return;
+  }
+
+  cartItems.innerHTML = cart.map((item, index) => {
+    const name = lang === "id" ? item.nameId : item.nameEn;
+    return `<div class="cart-item">
+      <div><h3>${name}</h3><p>${rupiah(item.price * item.qty)}</p></div>
+      <div class="qty">
+        <button type="button" data-minus="${index}" aria-label="${translate("decrease") || "Decrease quantity of"} ${name}">−</button>
+        <strong aria-live="polite">${item.qty}</strong>
+        <button type="button" data-plus="${index}" aria-label="${translate("increase") || "Increase quantity of"} ${name}">+</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function save() {
+  localStorage.setItem("kopita-cart", JSON.stringify(cart));
+  render();
+}
+
+function showToast(message) {
+  window.clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.hidden = false;
+  toastTimer = window.setTimeout(() => { toast.hidden = true; }, 1800);
+}
+
+function getDialogFocusables() {
+  return [...drawer.querySelectorAll("button:not([disabled]), [href], [tabindex]:not([tabindex='-1'])")]
+    .filter((el) => el.offsetParent !== null);
+}
+
+function openCart() {
+  if (drawer.classList.contains("open")) return;
+  lastFocusedElement = document.activeElement;
+  toast.hidden = true;
+  drawer.classList.add("open");
+  drawer.setAttribute("aria-hidden", "false");
+  backdrop.hidden = false;
+  document.body.classList.add("lock");
+  fab?.setAttribute("aria-expanded", "true");
+  window.requestAnimationFrame(() => document.querySelector("#close")?.focus());
+}
+
+function closeCart(restoreFocus = true) {
+  if (!drawer.classList.contains("open")) return;
+  drawer.classList.remove("open");
+  drawer.setAttribute("aria-hidden", "true");
+  backdrop.hidden = true;
+  document.body.classList.remove("lock");
+  fab?.setAttribute("aria-expanded", "false");
+  if (restoreFocus && lastFocusedElement instanceof HTMLElement) lastFocusedElement.focus();
+}
+
+function setLang(nextLang) {
+  lang = nextLang === "en" ? "en" : "id";
+  localStorage.setItem("kopita-lang", lang);
+  document.documentElement.lang = lang;
+  texts.forEach(([el, key]) => {
+    const value = translate(key);
+    if (value !== undefined) el.textContent = value;
+  });
+  htmlTexts.forEach(([el, key]) => {
+    const value = translate(key);
+    if (value !== undefined) el.innerHTML = value;
+  });
+  document.querySelectorAll("[data-lang]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.lang === lang);
+    button.setAttribute("aria-pressed", button.dataset.lang === lang ? "true" : "false");
+  });
+  updateAddLabels();
+  render();
+}
+
+document.querySelectorAll("[data-lang]").forEach((button) => {
+  button.addEventListener("click", () => setLang(button.dataset.lang));
+});
+
+document.querySelectorAll(".add").forEach((button) => {
+  button.addEventListener("click", () => {
+    const existing = cart.find((item) => item.id === button.dataset.id);
+    if (existing) existing.qty += 1;
+    else cart.push({
+      id: button.dataset.id,
+      nameEn: button.dataset.en,
+      nameId: button.dataset.idname,
+      price: Number(button.dataset.price),
+      qty: 1,
+    });
+    save();
+    const name = lang === "id" ? button.dataset.idname : button.dataset.en;
+    showToast(`${name} ${translate("added")}`);
+  });
+});
+
+cartItems.addEventListener("click", (event) => {
+  const button = event.target.closest("button");
+  if (!button) return;
+  const index = Number(button.dataset.plus ?? button.dataset.minus);
+  if (!Number.isInteger(index) || !cart[index]) return;
+  if (button.dataset.plus !== undefined) cart[index].qty += 1;
+  if (button.dataset.minus !== undefined) {
+    cart[index].qty -= 1;
+    if (cart[index].qty < 1) cart.splice(index, 1);
+  }
+  save();
+});
+
+document.querySelectorAll("[data-cart-open]").forEach((button) => button.addEventListener("click", openCart));
+document.querySelector("#close")?.addEventListener("click", () => closeCart());
+backdrop.addEventListener("click", () => closeCart());
+
+document.addEventListener("keydown", (event) => {
+  if (!drawer.classList.contains("open")) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeCart();
+    return;
+  }
+  if (event.key !== "Tab") return;
+  const focusables = getDialogFocusables();
+  if (!focusables.length) {
+    event.preventDefault();
+    drawer.focus();
+    return;
+  }
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
+
+document.querySelectorAll("[data-quick]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const message = lang === "id"
+      ? `Halo KOPI TA! Saya ingin memesan minuman untuk teman nugas.\nNama:\nPesanan:\nWaktu pengambilan:`
+      : `Hello KOPI TA! I would like to order a drink for my study session.\nName:\nOrder:\nPickup time:`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener");
+  });
+});
+
+document.querySelector("#checkout")?.addEventListener("click", () => {
+  if (!cart.length) {
+    showToast(translate("emptyToast"));
+    return;
+  }
+  const lines = cart.map((item) => `• ${item.qty}x ${lang === "id" ? item.nameId : item.nameEn} (${rupiah(item.qty * item.price)})`);
+  const amount = cart.reduce((sum, item) => sum + item.qty * item.price, 0);
+  const message = lang === "id"
+    ? ["Halo KOPI TA! Saya ingin memesan:", "", ...lines, "", `Total: ${rupiah(amount)}`, "", "Nama:", "Waktu pengambilan:"]
+    : ["Hello KOPI TA! I would like to order:", "", ...lines, "", `Total: ${rupiah(amount)}`, "", "Name:", "Pickup time:"];
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message.join("\n"))}`, "_blank", "noopener");
+});
+
+burger.addEventListener("click", () => {
+  const isOpen = mobile.classList.toggle("open");
+  burger.textContent = isOpen ? "×" : "≡";
+  burger.setAttribute("aria-expanded", String(isOpen));
+});
+mobile.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => {
+  mobile.classList.remove("open");
+  burger.textContent = "≡";
+  burger.setAttribute("aria-expanded", "false");
+}));
+
+const nav = document.querySelector("#nav");
+window.addEventListener("scroll", () => nav.classList.toggle("scrolled", window.scrollY > 24), { passive: true });
+
+const sections = [...document.querySelectorAll("[data-story-section]")];
+const railLinks = [...document.querySelectorAll("[data-chapter]")];
+const progress = document.querySelector("#railProgress");
+if (sections.length) {
+  const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+    if (!entry.isIntersecting) return;
+    railLinks.forEach((link) => {
+      const active = link.dataset.chapter === entry.target.dataset.storySection;
+      link.classList.toggle("active", active);
+      if (active) link.setAttribute("aria-current", "step");
+      else link.removeAttribute("aria-current");
+    });
+  }), { rootMargin: "-42% 0px -42% 0px" });
+  sections.forEach((section) => observer.observe(section));
+  window.addEventListener("scroll", () => {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.height = `${max ? Math.min(100, (window.scrollY / max) * 100) : 0}%`;
+  }, { passive: true });
+}
+
+setLang(lang);
